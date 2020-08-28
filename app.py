@@ -96,27 +96,20 @@ class FilterLastNameBrown(filters.BaseSQLAFilter):
             search.append(self.column.ilike(f'%{val}%'))
         return query.filter(or_(
             *search
-            # User.first_name.ilike(f'%Amel%'),
-            # User.first_name.ilike(f'%har%')
         ))
-        # .filter(User.first_name.like('Amelia'))
-
     def operation(self):
         return 'regexp'
 
 
 class FilterRole(filters.BaseSQLAFilter):
     def apply(self, query, value, alias=None):
-        # q = query.filter(User.first_name == value)
+        # return query.join(User.roles).filter(Role.name == value)
         search = []
         for val in value.split(','):
-            search.append(self.column.ilike(f'%{val}%'))
-        return query.filter(or_(
+            search.append(Role.name.ilike(f'%{val}%'))
+        return query.join(User.roles).filter(or_(
             *search
-            # User.first_name.ilike(f'%Amel%'),
-            # User.first_name.ilike(f'%har%')
         ))
-        # .filter(User.first_name.like('Amelia'))
 
     def operation(self):
         return 'regexp'
@@ -168,6 +161,7 @@ class MyModelViewUser(sqla.ModelView):
         FilterLastNameBrown(
             column=User.first_name, name='First Name'  # , options=get_all_first_name
         ),
+        # 'roles',
         FilterRole(
             'roles.name', 'Roles'
         ),
@@ -178,6 +172,8 @@ class MyModelViewUser(sqla.ModelView):
     )
 
     column_searchable_list = ("roles.name", "first_name")
+
+
 
     #
     # def init_search(self):
@@ -218,27 +214,27 @@ class MyModelViewUser(sqla.ModelView):
     #     """
     #     return self.session.query(self.model).get(tools.iterdecode(id)).filter(User.first_name == 'Amelia')
 
-    def _need_join(self, table):
-        """
-            Check if join to a table is necessary.
-        """
-        return table not in self.model._sa_class_manager.mapper.tables
-
-    def handle_filter(self, filter):
-        if isinstance(filter, filters.BaseSQLAFilter):
-            column = filter.column
-
-            if str(column) == 'roles.name':
-                self._filter_joins[column] = [User.__table__,
-                                              Role.__table__]
-            else:
-                self._filter_joins[column] = [column.table]
-
-
-            # if self._need_join(column.table):
-            #     self._filter_joins[column] = [column.table]
-
-        return filter
+    # def _need_join(self, table):
+    #     """
+    #         Check if join to a table is necessary.
+    #     """
+    #     return table not in self.model._sa_class_manager.mapper.tables
+    #
+    # def handle_filter(self, filter):
+    #     if isinstance(filter, filters.BaseSQLAFilter):
+    #         column = filter.column
+    #
+    #         if str(column) == 'roles.name':
+    #             self._filter_joins[column] = [User.__table__,
+    #                                           Role.__table__]
+    #         else:
+    #             self._filter_joins[column] = [column.table]
+    #
+    #
+    #         # if self._need_join(column.table):
+    #         #     self._filter_joins[column] = [column.table]
+    #
+    #     return filter
 
     def is_accessible(self):
         return (current_user.is_active and
